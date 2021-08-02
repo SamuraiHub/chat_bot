@@ -42,7 +42,7 @@ class InputWidget extends StatelessWidget {
             ? IconButton(
                 icon: Icon(
                   Icons.attach_file,
-                  color: Colors.grey,
+                  color: Color.fromRGBO(99, 83, 215, 1.0),
                 ),
                 onPressed: () {
                   onAttachFiles();
@@ -64,8 +64,12 @@ class InputWidget extends StatelessWidget {
 
   Widget buildSend() => Container(
         margin: EdgeInsets.symmetric(horizontal: 4),
-        child: IconButton(
-          icon: Icon(Icons.send),
+        child: TextButton(
+          style: TextButton.styleFrom(
+            backgroundColor: Color.fromRGBO(99, 83, 215, 1.0),
+            shape: CircleBorder(),
+          ),
+          child: Icon(Icons.send, color: Colors.white),
           onPressed: () {
             if (controller.text.trim().isEmpty) {
               return;

@@ -11,7 +11,7 @@ import 'package:parse_server_sdk/parse_server_sdk.dart';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'CustomUI/LoadingIndicator.dart';
-import 'CustomUI/OwnMessgaeCrad.dart';
+import 'CustomUI/OwnMessgaeCard.dart';
 import 'CustomUI/ReplyCard.dart';
 import 'CustomUI/input_widget.dart';
 //import 'package:dotenv/dotenv.dart';
@@ -196,30 +196,45 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(60),
         child: AppBar(
-          backgroundColor: Color.fromRGBO(99, 83, 215, 1.0),
-          leadingWidth: 70,
-          titleSpacing: 0,
-          leading: InkWell(
-            onTap: () {},
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  "assets/bot_image.jpg",
-                  height: 36,
-                  width: 36,
+            backgroundColor: Color.fromRGBO(99, 83, 215, 1.0),
+            leadingWidth: 70,
+            titleSpacing: 0,
+            leading: InkWell(
+              onTap: () {},
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    "assets/bot_image_PB.jpg",
+                    height: 36,
+                    width: 36,
+                  ),
+                ],
+              ),
+            ),
+            title: InkWell(
+              onTap: () {},
+              child: Container(
+                margin: EdgeInsets.all(6),
+                child: Text('Chat Bot'),
+              ),
+            ),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(
+                  Icons.refresh,
+                  color: Colors.white,
                 ),
-              ],
-            ),
-          ),
-          title: InkWell(
-            onTap: () {},
-            child: Container(
-              margin: EdgeInsets.all(6),
-              child: Text('Chat Bot'),
-            ),
-          ),
-        ),
+                onPressed: () {
+                  // do something
+                  setState(() {
+                    if (widget.messages.length > 1) {
+                      widget.messages.removeRange(1, widget.messages.length);
+                    }
+                  });
+                },
+              ),
+            ]),
       ),
       body: load
           ? Container(
@@ -365,7 +380,7 @@ class _MyHomePageState extends State<MyHomePage> {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
-      allowedExtensions: ['jpg', 'pdf', 'doc'],
+      allowedExtensions: ['jpg', 'pdf', 'doc', 'docx'],
     );
 
     if (result != null) {
