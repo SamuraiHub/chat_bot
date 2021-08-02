@@ -9,6 +9,7 @@ import 'package:ibm_watson_assistant/ibm_watson_assistant.dart';
 import 'package:parse_server_sdk/parse_server_sdk.dart';
 //import 'package:parse_server_sdk_flutter/parse_server_sdk.dart';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'CustomUI/LoadingIndicator.dart';
 import 'CustomUI/OwnMessgaeCrad.dart';
 import 'CustomUI/ReplyCard.dart';
@@ -273,7 +274,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                   if (sv == 'trade license:') {
                                     MessageModel messageModel = MessageModel(
                                       type: 'Destination',
-                                      message: 'assets/TL_Invoice.pdf',
+                                      message: kIsWeb
+                                          ? 'assets/TL_Invoice.jpg'
+                                          : 'assets/TL_Invoice.jpg',
                                       pdf: true,
                                       time: DateFormat('dd-MMMM-yyyy – hh:mm a')
                                           .format(DateTime.now()),
@@ -282,7 +285,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                   } else if (sv == 'driver license:') {
                                     MessageModel messageModel = MessageModel(
                                       type: 'Destination',
-                                      message: 'assets/DL_Invoice.pdf',
+                                      message: kIsWeb
+                                          ? 'assets/DL_Invoice.jpg'
+                                          : 'assets/DL_Invoice.jpg',
                                       pdf: true,
                                       time: DateFormat('dd-MMMM-yyyy – hh:mm a')
                                           .format(DateTime.now()),
@@ -291,7 +296,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                   } else {
                                     MessageModel messageModel = MessageModel(
                                       type: 'Destination',
-                                      message: 'assets/WP_Invoice.pdf',
+                                      message: kIsWeb
+                                          ? 'assets/WP_Invoice.jpg'
+                                          : 'assets/WP_Invoice.jpg',
                                       pdf: true,
                                       time: DateFormat('dd-MMMM-yyyy – hh:mm a')
                                           .format(DateTime.now()),
@@ -374,10 +381,22 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<bool> uploadFiles(FilePickerResult result) async {
-    ParseFileBase parseFile = ParseFile(File(result.paths[0]!));
-    ParseFileBase parseFile1 = ParseFile(File(result.paths[1]!));
-    ParseFileBase parseFile2 = ParseFile(File(result.paths[2]!));
+    ParseFileBase parseFile;
+    ParseFileBase parseFile1;
+    ParseFileBase parseFile2;
 
+    if (kIsWeb) {
+      parseFile =
+          ParseWebFile(result.files[0].bytes!, name: result.files[0].name);
+      parseFile1 =
+          ParseWebFile(result.files[1].bytes!, name: result.files[1].name);
+      parseFile2 =
+          ParseWebFile(result.files[2].bytes!, name: result.files[2].name);
+    } else {
+      parseFile = ParseFile(File(result.paths[0]!));
+      parseFile1 = ParseFile(File(result.paths[1]!));
+      parseFile2 = ParseFile(File(result.paths[2]!));
+    }
     var putFiles = ParseObject('Documents')
       ..set('File1', parseFile)
       ..set('File2', parseFile1)
@@ -395,6 +414,7 @@ class _MyHomePageState extends State<MyHomePage> {
               print("$count of $total"));
       return true;
     } else {
+      Navigator.of(context).pop();
       showError('Upload failed. Please try again');
       return false;
     }

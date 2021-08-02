@@ -1,5 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:pdf_render/pdf_render_widgets.dart';
+import 'package:native_pdf_view/native_pdf_view.dart';
 
 class ReplyCard extends StatelessWidget {
   const ReplyCard(
@@ -32,10 +33,9 @@ class ReplyCard extends StatelessWidget {
                   bottom: 20,
                 ),
                 child: pdf
-                    ? PdfDocumentLoader.openAsset(message,
-                        pageNumber: 1,
-                        pageBuilder: (context, textureBuilder, pageSize) =>
-                            textureBuilder())
+                    ? kIsWeb
+                        ? Image.network('assets/' + message)
+                        : Image.asset(message)
                     : Text(
                         message,
                         style: TextStyle(

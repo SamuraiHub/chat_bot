@@ -5,8 +5,8 @@
 import FlutterMacOS
 import Foundation
 
-import pdf_render
+import native_pdf_renderer
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
-  SwiftPdfRenderPlugin.register(with: registry.registrar(forPlugin: "SwiftPdfRenderPlugin"))
+  NativePdfRendererPlugin.register(with: registry.registrar(forPlugin: "NativePdfRendererPlugin"))
 }
