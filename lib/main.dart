@@ -328,6 +328,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   setState(() {
                     if (widget.messages.length > 1) {
                       widget.messages.removeRange(1, widget.messages.length);
+                      f = 0;
+                      objectId = '';
                     }
                   });
                 },
