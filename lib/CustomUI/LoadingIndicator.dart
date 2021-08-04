@@ -13,7 +13,7 @@ class LoadingIndicator extends StatelessWidget {
             children: [
               _getLoadingIndicator(),
               _getHeading(),
-              _getText('Uploading Files')
+              _getText('Uploading File')
             ]));
   }
 

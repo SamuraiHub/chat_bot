@@ -95,15 +95,11 @@ class _MyHomePageState extends State<MyHomePage> {
   bool attach =
       false; // attach is true when the user needs to upload name address or phone number.
 
-  List<FilePickerResult> result = List.filled(
-      3,
-      FilePickerResult(
-          List.filled(1, PlatformFile(name: 'untitiled', size: 0))));
-
   late final IbmWatsonAssistant bot;
   late final String sessionId;
 
   int f = 0; // number of selected files;
+  String objectId = ''; // id of the row which contain the selected files;
 
   Widget Messages() {
     return ListView.builder(
@@ -354,35 +350,34 @@ class _MyHomePageState extends State<MyHomePage> {
                     onAttachFile: () {
                       pickFile().then((value) {
                         if (value != null) {
-                          result[f] = value;
                           f++;
-                          if (f == 3) {
-                            f = 0;
-                            showDialog(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (BuildContext context) {
-                                return WillPopScope(
-                                    onWillPop: () async => false,
-                                    child: AlertDialog(
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(8.0))),
-                                      backgroundColor: Colors.white,
-                                      content: LoadingIndicator(),
-                                    ));
-                              },
-                            );
-
-                            uploadFiles(result).then((value) {
-                              if (value) {
-                                Navigator.of(context).pop();
-                                getResponse('OK');
-                              }
-                            });
-                          } else {
-                            getResponse('OK');
-                          }
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (BuildContext context) {
+                              return WillPopScope(
+                                  onWillPop: () async => false,
+                                  child: AlertDialog(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(8.0))),
+                                    backgroundColor: Colors.white,
+                                    content: LoadingIndicator(),
+                                  ));
+                            },
+                          );
+                          uploadFile(value, f).then((value) {
+                            if (value) {
+                              Navigator.of(context).pop();
+                              getResponse('OK');
+                            } else {
+                              f--;
+                            }
+                            if (f == 3) {
+                              f = 0;
+                              objectId = '';
+                            }
+                          });
                         }
                       });
                     },
@@ -410,39 +405,31 @@ class _MyHomePageState extends State<MyHomePage> {
     return result;
   }
 
-  Future<bool> uploadFiles(List<FilePickerResult> result) async {
+  Future<bool> uploadFile(FilePickerResult result, int f) async {
     ParseFileBase parseFile;
-    ParseFileBase parseFile1;
-    ParseFileBase parseFile2;
 
     if (kIsWeb) {
-      parseFile = ParseWebFile(result[0].files.single.bytes!,
-          name: result[0].files.single.name);
-      parseFile1 = ParseWebFile(result[1].files.single.bytes!,
-          name: result[1].files.single.name);
-      parseFile2 = ParseWebFile(result[2].files.single.bytes!,
-          name: result[2].files.single.name);
+      parseFile = ParseWebFile(result.files.single.bytes!,
+          name: result.files.single.name);
     } else {
-      parseFile = ParseFile(File(result[0].files.single.path!));
-      parseFile1 = ParseFile(File(result[1].files.single.path!));
-      parseFile2 = ParseFile(File(result[2].files.single.path!));
-      print('noob: ' + result[0].files.single.path!);
+      parseFile = ParseFile(File(result.files.single.path!));
     }
-    var putFiles = ParseObject('Documents')
-      ..set('File1', parseFile)
-      ..set('File2', parseFile1)
-      ..set('File3', parseFile2);
-    var response = await putFiles.save();
+    var putFile = ParseObject('Documents');
+
+    var response;
+
+    if (f == 1 && objectId == "") {
+      putFile..set('File' + f.toString(), parseFile);
+      response = await putFile.save();
+    } else {
+      putFile
+        ..objectId = objectId
+        ..set('File' + f.toString(), parseFile);
+      response = await putFile.save();
+    }
+
     if (response.success) {
-      parseFile.upload(
-          progressCallback: (int count, int total) =>
-              print("$count of $total"));
-      parseFile1.upload(
-          progressCallback: (int count, int total) =>
-              print("$count of $total"));
-      parseFile2.upload(
-          progressCallback: (int count, int total) =>
-              print("$count of $total"));
+      objectId = putFile.objectId!;
       return true;
     } else {
       Navigator.of(context).pop();
