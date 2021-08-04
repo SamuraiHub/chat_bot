@@ -1,13 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:native_pdf_view/native_pdf_view.dart';
 
 class ReplyCard extends StatelessWidget {
-  const ReplyCard(
-      {Key? key, required this.message, required this.pdf, required this.time})
+  const ReplyCard({Key? key, required this.message, required this.time})
       : super(key: key);
   final String message;
-  final bool pdf;
   final String time;
 
   @override
@@ -44,16 +41,12 @@ class ReplyCard extends StatelessWidget {
                         top: 5,
                         bottom: 20,
                       ),
-                      child: pdf
-                          ? kIsWeb
-                              ? Image.network('assets/' + message)
-                              : Image.asset(message)
-                          : Text(
-                              message,
-                              style: TextStyle(
-                                fontSize: 16,
-                              ),
-                            ),
+                      child: Text(
+                        message,
+                        style: TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                     Positioned(
                       bottom: 3,
