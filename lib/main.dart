@@ -404,7 +404,7 @@ class _MyHomePageState extends State<MyHomePage> {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
       type: FileType.custom,
-      allowedExtensions: ['jpg', 'pdf' /*, 'docx'*/],
+      allowedExtensions: ['jpg', 'png', 'pdf', 'docx', 'doc'],
     );
 
     return result;
@@ -446,7 +446,8 @@ class _MyHomePageState extends State<MyHomePage> {
       return true;
     } else {
       Navigator.of(context).pop();
-      showError('Upload failed. Please try again');
+      showError(
+          'Upload failed. ' + response.error!.message + ' Please try again');
       return false;
     }
   }
