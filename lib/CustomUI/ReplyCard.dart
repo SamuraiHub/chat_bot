@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class ReplyCard extends StatelessWidget {
-  const ReplyCard({Key? key, required this.message, required this.time})
+  const ReplyCard(
+      {Key? key, required this.message, required this.img, required this.time})
       : super(key: key);
   final String message;
+  final bool img;
   final String time;
 
   @override
@@ -41,12 +43,16 @@ class ReplyCard extends StatelessWidget {
                         top: 5,
                         bottom: 20,
                       ),
-                      child: Text(
-                        message,
-                        style: TextStyle(
-                          fontSize: 16,
-                        ),
-                      ),
+                      child: img
+                          ? kIsWeb
+                              ? Image.network('assets/' + message)
+                              : Image.asset(message)
+                          : Text(
+                              message,
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
+                            ),
                     ),
                     Positioned(
                       bottom: 3,

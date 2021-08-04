@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 class InputWidget extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onSentMessage;
+  final VoidCallback onAttachFile;
+  final bool attachFile;
   final focusNode = FocusNode();
 
   InputWidget({
     required this.controller,
     required this.onSentMessage,
+    required this.attachFile,
+    required this.onAttachFile,
     Key? key,
   }) : super(key: key);
 
@@ -33,6 +37,20 @@ class InputWidget extends StatelessWidget {
       decoration: InputDecoration(
         hintText: 'Type your message...',
         hintStyle: TextStyle(color: Colors.grey),
+        suffixIcon: attachFile
+            ? IconButton(
+                icon: Icon(
+                  Icons.attach_file,
+                  color: Color.fromRGBO(99, 83, 215, 1.0),
+                ),
+                onPressed: () {
+                  this.onAttachFile();
+                },
+              )
+            : Container(
+                width: 0,
+                height: 0,
+              ),
       ),
       onSubmitted: (value) {
         if (controller.text.trim().isEmpty) {

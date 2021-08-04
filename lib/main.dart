@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import 'package:chat_bot/Model/MessageModel.dart';
@@ -7,6 +10,7 @@ import 'package:ibm_watson_assistant/ibm_watson_assistant.dart';
 import 'package:parse_server_sdk/parse_server_sdk.dart';
 //import 'package:parse_server_sdk_flutter/parse_server_sdk.dart';
 
+import 'CustomUI/LoadingIndicator.dart';
 import 'CustomUI/OwnMessgaeCard.dart';
 import 'CustomUI/ReplyCard.dart';
 import 'CustomUI/input_widget.dart';
@@ -77,7 +81,7 @@ class MyHomePage extends StatefulWidget {
 
   final String title;
   final List<MessageModel> messages = List.filled(
-      0, MessageModel(type: 'Destination', message: '', time: ''),
+      0, MessageModel(type: 'Destination', message: '', img: false, time: ''),
       growable: true);
 
   @override
@@ -88,11 +92,18 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController _controller = TextEditingController();
   ScrollController _scrollController = ScrollController();
   bool load = false;
-  bool sendOk =
-      false; // sends ok to bot when the user types name address or phone number.
+  bool attach =
+      false; // attach is true when the user needs to upload name address or phone number.
+
+  List<FilePickerResult> result = List.filled(
+      3,
+      FilePickerResult(
+          List.filled(1, PlatformFile(name: 'untitiled', size: 0))));
 
   late final IbmWatsonAssistant bot;
   late final String sessionId;
+
+  int f = 0; // number of selected files;
 
   Widget Messages() {
     return ListView.builder(
@@ -113,6 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
         } else {
           return ReplyCard(
             message: widget.messages[index].message,
+            img: widget.messages[index].img,
             time: widget.messages[index].time,
           );
         }
@@ -125,10 +137,103 @@ class _MyHomePageState extends State<MyHomePage> {
     return botRes.responseText!;
   }
 
+  void getResponse(String message) {
+    sendMessage(message).then((value) {
+      if (value.startsWith('Please')) {
+        int i = value.indexOf('Please', 5);
+
+        String value1 = value.substring(0, i - 1);
+        String value2 = value.substring(i);
+
+        MessageModel messageModel1 = MessageModel(
+          type: 'Destination',
+          message: value1,
+          img: false,
+          time: DateFormat('dd-MMMM-yyyy – hh:mm a').format(DateTime.now()),
+        );
+        MessageModel messageModel2 = MessageModel(
+          type: 'Destination',
+          img: false,
+          message: value2,
+          time: DateFormat('dd-MMMM-yyyy – hh:mm a').format(DateTime.now()),
+        );
+
+        setState(() {
+          widget.messages.add(messageModel1);
+          widget.messages.add(messageModel2);
+          attach = true;
+        });
+      } else if (value.startsWith('Your')) {
+        int i = value.indexOf('Here', 4);
+        String value1 = value.substring(0, i - 1);
+        String value2 = value.substring(i);
+
+        MessageModel messageModel1 = MessageModel(
+          type: 'Destination',
+          message: value1,
+          img: false,
+          time: DateFormat('dd-MMMM-yyyy – hh:mm a').format(DateTime.now()),
+        );
+        MessageModel messageModel2 = MessageModel(
+          type: 'Destination',
+          message: value2,
+          img: false,
+          time: DateFormat('dd-MMMM-yyyy – hh:mm a').format(DateTime.now()),
+        );
+
+        String sv = value2.substring(38);
+
+        MessageModel messageModel3;
+
+        if (sv == 'trade license:') {
+          messageModel3 = MessageModel(
+            type: 'Destination',
+            message: kIsWeb ? 'assets/TL_Invoice.jpg' : 'assets/TL_Invoice.jpg',
+            img: true,
+            time: DateFormat('dd-MMMM-yyyy – hh:mm a').format(DateTime.now()),
+          );
+        } else if (sv == 'market license:') {
+          messageModel3 = MessageModel(
+            type: 'Destination',
+            message: kIsWeb ? 'assets/ML_Invoice.jpg' : 'assets/ML_Invoice.jpg',
+            img: true,
+            time: DateFormat('dd-MMMM-yyyy – hh:mm a').format(DateTime.now()),
+          );
+        } else {
+          messageModel3 = MessageModel(
+            type: 'Destination',
+            message: kIsWeb ? 'assets/BL_Invoice.jpg' : 'assets/BL_Invoice.jpg',
+            img: true,
+            time: DateFormat('dd-MMMM-yyyy – hh:mm a').format(DateTime.now()),
+          );
+        }
+
+        setState(() {
+          widget.messages.add(messageModel1);
+          widget.messages.add(messageModel2);
+          widget.messages.add(messageModel3);
+          attach = false;
+        });
+      } else {
+        MessageModel messageModel = MessageModel(
+          type: 'Destination',
+          message: value,
+          img: false,
+          time: DateFormat('dd-MMMM-yyyy – hh:mm a').format(DateTime.now()),
+        );
+        setState(() {
+          widget.messages.add(messageModel);
+        });
+      }
+      _moveScroll();
+    });
+  }
+
   void setMessage(String message) {
     MessageModel messageModel = MessageModel(
         type: 'Source',
         message: message,
+        img: false,
         time: DateFormat('dd-MMMM-yyyy – hh:mm a').format(DateTime.now()));
     //print(messages);
 
@@ -167,6 +272,7 @@ class _MyHomePageState extends State<MyHomePage> {
           MessageModel messageModel = MessageModel(
             type: 'Destination',
             message: value,
+            img: false,
             time: DateFormat('dd-MMMM-yyyy – hh:mm a').format(DateTime.now()),
           );
 
@@ -244,70 +350,45 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: Messages()),
                   InputWidget(
                     controller: _controller,
+                    attachFile: attach,
+                    onAttachFile: () {
+                      pickFile().then((value) {
+                        if (value != null) {
+                          result[f] = value;
+                          f++;
+                          if (f == 3) {
+                            f = 0;
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (BuildContext context) {
+                                return WillPopScope(
+                                    onWillPop: () async => false,
+                                    child: AlertDialog(
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(8.0))),
+                                      backgroundColor: Colors.white,
+                                      content: LoadingIndicator(),
+                                    ));
+                              },
+                            );
+
+                            uploadFiles(result).then((value) {
+                              if (value) {
+                                Navigator.of(context).pop();
+                                getResponse('OK');
+                              }
+                            });
+                          } else {
+                            getResponse('OK');
+                          }
+                        }
+                      });
+                    },
                     onSentMessage: (message) {
                       setMessage(message);
-                      if (sendOk) message = 'OK';
-                      sendMessage(message).then((value) {
-                        if (value.startsWith('Please')) {
-                          int i = value.indexOf('Please', 5);
-
-                          String value1 = value.substring(0, i - 1);
-                          String value2 = value.substring(i);
-
-                          MessageModel messageModel1 = MessageModel(
-                            type: 'Destination',
-                            message: value1,
-                            time: DateFormat('dd-MMMM-yyyy – hh:mm a')
-                                .format(DateTime.now()),
-                          );
-                          MessageModel messageModel2 = MessageModel(
-                            type: 'Destination',
-                            message: value2,
-                            time: DateFormat('dd-MMMM-yyyy – hh:mm a')
-                                .format(DateTime.now()),
-                          );
-
-                          setState(() {
-                            widget.messages.add(messageModel1);
-                            widget.messages.add(messageModel2);
-                            sendOk = true;
-                          });
-                        } else if (value.startsWith('Your')) {
-                          int i = value.indexOf('Your', 4);
-                          String value1 = value.substring(0, i - 1);
-                          String value2 = value.substring(i);
-
-                          MessageModel messageModel1 = MessageModel(
-                            type: 'Destination',
-                            message: value1,
-                            time: DateFormat('dd-MMMM-yyyy – hh:mm a')
-                                .format(DateTime.now()),
-                          );
-                          MessageModel messageModel2 = MessageModel(
-                            type: 'Destination',
-                            message: value2,
-                            time: DateFormat('dd-MMMM-yyyy – hh:mm a')
-                                .format(DateTime.now()),
-                          );
-
-                          setState(() {
-                            widget.messages.add(messageModel1);
-                            widget.messages.add(messageModel2);
-                            sendOk = false;
-                          });
-                        } else {
-                          MessageModel messageModel = MessageModel(
-                            type: 'Destination',
-                            message: value,
-                            time: DateFormat('dd-MMMM-yyyy – hh:mm a')
-                                .format(DateTime.now()),
-                          );
-                          setState(() {
-                            widget.messages.add(messageModel);
-                          });
-                        }
-                        _moveScroll();
-                      });
+                      getResponse(message);
                     },
                   ),
                 ],
@@ -316,6 +397,81 @@ class _MyHomePageState extends State<MyHomePage> {
           : Center(
               child: CircularProgressIndicator(),
             ),
+    );
+  }
+
+  Future<FilePickerResult?> pickFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'pdf' /*, 'docx'*/],
+    );
+
+    return result;
+  }
+
+  Future<bool> uploadFiles(List<FilePickerResult> result) async {
+    ParseFileBase parseFile;
+    ParseFileBase parseFile1;
+    ParseFileBase parseFile2;
+
+    if (kIsWeb) {
+      parseFile = ParseWebFile(result[0].files.single.bytes!,
+          name: result[0].files.single.name);
+      parseFile1 = ParseWebFile(result[1].files.single.bytes!,
+          name: result[1].files.single.name);
+      parseFile2 = ParseWebFile(result[2].files.single.bytes!,
+          name: result[2].files.single.name);
+    } else {
+      parseFile = ParseFile(File(result[0].files.single.path!));
+      parseFile1 = ParseFile(File(result[1].files.single.path!));
+      parseFile2 = ParseFile(File(result[2].files.single.path!));
+      print('noob: ' + result[0].files.single.path!);
+    }
+    var putFiles = ParseObject('Documents')
+      ..set('File1', parseFile)
+      ..set('File2', parseFile1)
+      ..set('File3', parseFile2);
+    var response = await putFiles.save();
+    if (response.success) {
+      parseFile.upload(
+          progressCallback: (int count, int total) =>
+              print("$count of $total"));
+      parseFile1.upload(
+          progressCallback: (int count, int total) =>
+              print("$count of $total"));
+      parseFile2.upload(
+          progressCallback: (int count, int total) =>
+              print("$count of $total"));
+      return true;
+    } else {
+      Navigator.of(context).pop();
+      showError('Upload failed. Please try again');
+      return false;
+    }
+  }
+
+  void showError(String errorMessage) {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Error!"),
+          content: Text(
+            errorMessage,
+            maxLines: 3,
+          ),
+          actions: <Widget>[
+            new TextButton(
+              child: const Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
